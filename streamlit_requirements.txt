@@ -1,0 +1,17 @@
+torch
+torchvision
+transformers
+timm
+opencv-python
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+streamlit>=1.28.0
+pillow
+tqdm
+streamlit-webrtc
+python-dotenv
+sentencepiece
+fpdf2
