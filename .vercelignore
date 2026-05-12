@@ -1,0 +1,11 @@
+data/
+experiments/
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.env.local
+.env
+node_modules/
