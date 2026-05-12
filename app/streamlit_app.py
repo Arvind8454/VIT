@@ -9,14 +9,25 @@ import threading
 import time
 from dataclasses import dataclass
 
-import av
-import cv2
+try:
+    import av
+    import cv2
+    from streamlit_webrtc import WebRtcMode, VideoProcessorBase, webrtc_streamer
+    STREAMLIT_WEBRTC_AVAILABLE = True
+except ImportError:
+    av = None
+    cv2 = None
+    WebRtcMode = None
+    VideoProcessorBase = object
+    webrtc_streamer = None
+    STREAMLIT_WEBRTC_AVAILABLE = False
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
 from PIL import Image, UnidentifiedImageError
-from streamlit_webrtc import WebRtcMode, VideoProcessorBase, webrtc_streamer
+
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
 if PROJECT_ROOT not in sys.path:
@@ -80,63 +91,66 @@ def get_live_state() -> LiveState:
 LIVE_STATE = get_live_state()
 
 
-class WebcamPredictor(VideoProcessorBase):
-    def __init__(self):
-        self.last_pred_at = 0.0
-        self.frame_count = 0
+if STREAMLIT_WEBRTC_AVAILABLE:
+    class WebcamPredictor(VideoProcessorBase):
+        def __init__(self):
+            self.last_pred_at = 0.0
+            self.frame_count = 0
 
-    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
-        bgr = frame.to_ndarray(format="bgr24")
-        if bgr is None or bgr.size == 0:
+        def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+            bgr = frame.to_ndarray(format="bgr24")
+            if bgr is None or bgr.size == 0:
+                with LIVE_STATE.lock:
+                    LIVE_STATE.status = "No valid frame"
+                return frame
+
+            rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+            self.frame_count += 1
+
             with LIVE_STATE.lock:
-                LIVE_STATE.status = "No valid frame"
-            return frame
+                LIVE_STATE.last_frame_rgb = rgb.copy()
+                model_mode = LIVE_STATE.model_mode
+                interval = LIVE_STATE.interval_sec
+                frame_skip = max(1, int(LIVE_STATE.frame_skip))
+                status = LIVE_STATE.status
 
-        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        self.frame_count += 1
+            now = time.time()
+            should_run = (
+                not str(status).startswith("OFF")
+                and self.frame_count % frame_skip == 0
+                and (now - self.last_pred_at) >= interval
+            )
+            if should_run:
+                try:
+                    pred = predict_image(
+                        image=Image.fromarray(rgb),
+                        model_mode=model_mode,
+                        resize_224=True,
+                        return_attentions=False,
+                    )
+                    with LIVE_STATE.lock:
+                        LIVE_STATE.label = pred["label"]
+                        LIVE_STATE.confidence = pred["confidence"]
+                        LIVE_STATE.status = f"ON ({pred['model_mode']})"
+                        LIVE_STATE.device = pred.get("device", "--")
+                        LIVE_STATE.fp16_enabled = bool(pred.get("fp16_enabled", False))
+                        LIVE_STATE.top_predictions = pred.get("top_predictions", [])
+                    self.last_pred_at = now
+                except Exception:
+                    with LIVE_STATE.lock:
+                        LIVE_STATE.status = "Prediction error"
 
-        with LIVE_STATE.lock:
-            LIVE_STATE.last_frame_rgb = rgb.copy()
-            model_mode = LIVE_STATE.model_mode
-            interval = LIVE_STATE.interval_sec
-            frame_skip = max(1, int(LIVE_STATE.frame_skip))
-            status = LIVE_STATE.status
+            with LIVE_STATE.lock:
+                text_label = LIVE_STATE.label
+                text_conf = LIVE_STATE.confidence
 
-        now = time.time()
-        should_run = (
-            not str(status).startswith("OFF")
-            and self.frame_count % frame_skip == 0
-            and (now - self.last_pred_at) >= interval
-        )
-        if should_run:
-            try:
-                pred = predict_image(
-                    image=Image.fromarray(rgb),
-                    model_mode=model_mode,
-                    resize_224=True,
-                    return_attentions=False,
-                )
-                with LIVE_STATE.lock:
-                    LIVE_STATE.label = pred["label"]
-                    LIVE_STATE.confidence = pred["confidence"]
-                    LIVE_STATE.status = f"ON ({pred['model_mode']})"
-                    LIVE_STATE.device = pred.get("device", "--")
-                    LIVE_STATE.fp16_enabled = bool(pred.get("fp16_enabled", False))
-                    LIVE_STATE.top_predictions = pred.get("top_predictions", [])
-                self.last_pred_at = now
-            except Exception:
-                with LIVE_STATE.lock:
-                    LIVE_STATE.status = "Prediction error"
-
-        with LIVE_STATE.lock:
-            text_label = LIVE_STATE.label
-            text_conf = LIVE_STATE.confidence
-
-        overlay = bgr.copy()
-        cv2.rectangle(overlay, (8, 8), (520, 82), (15, 23, 42), -1)
-        cv2.putText(overlay, f"Prediction: {text_label}", (16, 38), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2)
-        cv2.putText(overlay, f"Confidence: {text_conf * 100:.2f}%", (16, 67), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (165, 243, 252), 2)
-        return av.VideoFrame.from_ndarray(overlay, format="bgr24")
+            overlay = bgr.copy()
+            cv2.rectangle(overlay, (8, 8), (520, 82), (15, 23, 42), -1)
+            cv2.putText(overlay, f"Prediction: {text_label}", (16, 38), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2)
+            cv2.putText(overlay, f"Confidence: {text_conf * 100:.2f}%", (16, 67), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (165, 243, 252), 2)
+            return av.VideoFrame.from_ndarray(overlay, format="bgr24")
+else:
+    WebcamPredictor = None
 
 
 def set_styles():
@@ -1013,15 +1027,21 @@ def render_live_camera(settings: dict):
         st.caption("Adaptive runtime: uses GPU when available, otherwise CPU, with low-frequency frame processing.")
 
     if st.session_state.get("camera_on", False):
-        ctx = webrtc_streamer(
-            key="vision-live-cam",
-            mode=WebRtcMode.SENDRECV,
-            video_processor_factory=WebcamPredictor,
-            media_stream_constraints={"video": True, "audio": False},
-            async_processing=True,
-        )
-        if not ctx.state.playing:
-            st.warning("Waiting for camera permission...")
+        if STREAMLIT_WEBRTC_AVAILABLE and WebcamPredictor is not None:
+            ctx = webrtc_streamer(
+                key="vision-live-cam",
+                mode=WebRtcMode.SENDRECV,
+                video_processor_factory=WebcamPredictor,
+                media_stream_constraints={"video": True, "audio": False},
+                async_processing=True,
+            )
+            if not ctx.state.playing:
+                st.warning("Waiting for camera permission...")
+        else:
+            st.warning(
+                "Camera streaming is unavailable because streamlit-webrtc is not installed or supported in this environment."
+            )
+            st.info("Use app/streamlit_app_simple.py for Streamlit Cloud deployment without camera support.")
     else:
         st.info("Camera is OFF. No prediction is performed.")
 
