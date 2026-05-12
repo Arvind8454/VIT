@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Contact - ViT Explainable AI Project{% endblock %}
+{% block content %}
+<section class="page-card max-w-3xl mx-auto">
+    <header class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Contact</h1>
+        <p class="mt-2 text-slate-600">Send us a message. This form posts to a Flask backend route for future integration.</p>
+    </header>
+    <form action="{{ url_for('contact') }}" method="POST" class="grid grid-cols-1 gap-5">
+        <div>
+            <label for="name" class="form-label">Name</label>
+            <input id="name" name="name" type="text" class="form-input" placeholder="Your name" required>
+        </div>
+        <div>
+            <label for="email" class="form-label">Email</label>
+            <input id="email" name="email" type="email" class="form-input" placeholder="you@example.com" required>
+        </div>
+        <div>
+            <label for="message" class="form-label">Message</label>
+            <textarea id="message" name="message" rows="5" class="form-input" placeholder="Write your message..." required></textarea>
+        </div>
+        <div>
+            <button type="submit" class="btn-primary w-full sm:w-auto">Submit</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

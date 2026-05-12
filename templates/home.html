@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Home - ViT Explainable AI Project{% endblock %}
+{% block content %}
+<section class="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-primary text-white p-8 md:p-12 shadow-xl">
+    <div class="max-w-4xl">
+        <p class="uppercase tracking-[0.18em] text-slate-200 text-xs md:text-sm mb-4">AI Image Recognition Platform</p>
+        <h1 class="text-3xl md:text-5xl font-bold leading-tight">
+            Vision Transformer (ViT) Based Image Recognition with Explainable AI and Self-Supervised Pretraining
+        </h1>
+        <p class="mt-5 text-slate-100/95 text-base md:text-lg max-w-3xl">
+            Analyze images using ViT models, inspect model reasoning using Grad-CAM and attention rollout, and interact through an end-to-end application workflow.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+            {% if 'user' in session %}
+                <a href="{{ url_for('dashboard') }}" class="btn-primary">Start Using System</a>
+            {% else %}
+                <a href="{{ url_for('signup') }}" class="btn-primary">Start Using System</a>
+            {% endif %}
+            <a href="{{ url_for('about') }}" class="btn-secondary">Explore Project</a>
+        </div>
+    </div>
+</section>
+
+<section class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <article class="feature-card">
+        <h3>Vision Transformer Core</h3>
+        <p>Patch-based transformer encoder for robust image representation learning across object contexts.</p>
+    </article>
+    <article class="feature-card">
+        <h3>Self-Supervised MAE</h3>
+        <p>Masked Autoencoder pretraining to improve downstream classification generalization.</p>
+    </article>
+    <article class="feature-card">
+        <h3>Explainable AI Outputs</h3>
+        <p>Visual diagnostics using Grad-CAM heatmaps and transformer attention rollout overlays.</p>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}About - ViT Explainable AI Project{% endblock %}
+{% block content %}
+<section class="page-card">
+    <header class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-900">About This Project</h1>
+        <p class="mt-3 text-slate-600 max-w-3xl">
+            This application provides end-to-end image recognition using Vision Transformers, enhanced through self-supervised pretraining and explainable AI visualizations.
+        </p>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <article class="content-card">
+            <h2>What The Project Does</h2>
+            <p>
+                The system classifies uploaded images, returns confidence scores, and explains predictions through heatmaps. It is designed for practical experimentation and interpretable model behavior.
+            </p>
+        </article>
+        <article class="content-card">
+            <h2>Technology Used</h2>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>Python, Flask, Streamlit</li>
+                <li>PyTorch, Hugging Face Transformers, timm</li>
+                <li>NumPy, Pandas, OpenCV, Matplotlib</li>
+                <li>CIFAR-10 training and evaluation pipeline</li>
+            </ul>
+        </article>
+        <article class="content-card">
+            <h2>Vision Transformer Recognition</h2>
+            <p>
+                ViT splits images into patches, embeds them, and models global relationships through self-attention, enabling strong image classification performance.
+            </p>
+        </article>
+        <article class="content-card">
+            <h2>Explainable AI</h2>
+            <p>
+                The app includes Grad-CAM and attention rollout to highlight which regions contribute to model decisions, helping users trust and debug predictions.
+            </p>
+        </article>
+    </div>
+</section>
+{% endblock %}

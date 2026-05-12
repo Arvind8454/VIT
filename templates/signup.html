@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Signup - ViT Explainable AI Project{% endblock %}
+{% block content %}
+<section class="max-w-lg mx-auto page-card">
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Create Account</h1>
+    <p class="mt-2 text-slate-600">Sign up to access the AI recognition dashboard.</p>
+    <form id="signup-form" action="{{ url_for('signup') }}" method="post" class="mt-6 grid gap-5" novalidate>
+        <div>
+            <label for="username" class="form-label">Username</label>
+            <input id="username" name="username" type="text" class="form-input" autocomplete="username" placeholder="Enter your username" required>
+        </div>
+        <div>
+            <label for="email" class="form-label">Email Address</label>
+            <input id="email" name="email" type="email" class="form-input" autocomplete="email" placeholder="Enter your email address" required>
+        </div>
+        <div>
+            <label for="password" class="form-label">Password</label>
+            <input id="password" name="password" type="password" class="form-input" autocomplete="new-password" placeholder="Create a strong password" required>
+        </div>
+        <div>
+            <label for="confirm" class="form-label">Confirm Password</label>
+            <input id="confirm" name="confirm" type="password" class="form-input" autocomplete="new-password" placeholder="Re-enter your password" required>
+        </div>
+        <button id="signup-submit" type="submit" class="btn-primary w-full">Create Account</button>
+    </form>
+    <p class="mt-5 text-sm text-slate-600">Already have an account? <a class="text-primary font-semibold hover:underline" href="{{ url_for('login') }}">Log in here</a></p>
+</section>
+{% endblock %}

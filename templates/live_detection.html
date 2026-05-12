@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Live Detection - ViT Explainable AI Project{% endblock %}
+{% block content %}
+<section class="page-card">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Live Webcam Detection</h1>
+            <p class="mt-2 text-base md:text-lg text-slate-600">
+                Real-time ViT classification optimized for CPU. Predictions run every ~2.5 seconds to keep the system lightweight.
+            </p>
+        </div>
+        <div class="w-full md:w-64">
+            <label for="model-mode" class="form-label">Model</label>
+            <select id="model-mode" class="form-input">
+                <option value="pretrained">Pretrained (google/vit-base-patch16-224)</option>
+                <option value="custom">Custom Checkpoint</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2">
+            <div class="rounded-xl border border-slate-200 bg-slate-900 overflow-hidden">
+                <video id="webcam-video" class="w-full aspect-video object-cover" autoplay muted playsinline></video>
+            </div>
+            <canvas id="capture-canvas" class="hidden"></canvas>
+            <div class="flex flex-wrap gap-3 mt-4">
+                <button id="start-webcam" class="btn-primary" type="button">Start Camera</button>
+                <button id="stop-webcam" class="btn-secondary" type="button">Stop Camera</button>
+                <button id="explain-btn" class="btn-secondary" type="button">Explain Prediction</button>
+            </div>
+        </div>
+
+        <aside>
+            <div class="content-card h-full">
+                <h2 class="mb-2">Live Prediction</h2>
+                <p class="text-base text-slate-500 mb-3">Prediction updates at low frequency for smooth real-time performance (GPU if available, else CPU).</p>
+                <div class="rounded-lg border border-slate-200 p-4 bg-white">
+                    <p class="text-base text-slate-500">Prediction</p>
+                    <p id="prediction-label" class="text-2xl font-bold text-slate-900 mt-1">--</p>
+                    <p class="text-base text-slate-500 mt-3">Confidence</p>
+                    <p id="prediction-confidence" class="text-2xl font-semibold text-primary mt-1">--</p>
+                    <p class="text-sm text-slate-500 mt-3">Runtime</p>
+                    <p id="prediction-runtime" class="text-base font-medium text-slate-700 mt-1">Device: -- | FP16: --</p>
+                    <p class="text-sm text-slate-500 mt-3">Status: <span id="prediction-status">Idle</span></p>
+                </div>
+                <div class="rounded-lg border border-slate-200 p-4 bg-white mt-4">
+                    <p class="text-base text-slate-500">Top-3 Predictions</p>
+                    <ul id="prediction-topk" class="list-disc pl-5 text-sm text-slate-700 mt-2 space-y-1">
+                        <li>No predictions yet.</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="content-card mt-6">
+        <h2 class="mb-2">Explainability</h2>
+        <p class="text-base text-slate-500 mb-3">Generated only when you click "Explain Prediction".</p>
+        <p class="text-sm text-slate-500 mb-2">AI Explanation</p>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <p id="explain-text" class="text-base md:text-lg text-slate-700 leading-relaxed">
+                No explanation generated yet.
+            </p>
+            <p id="technical-text" class="text-sm md:text-base text-slate-600 leading-relaxed mt-3">
+                Technical explanation will appear here.
+            </p>
+            <p id="contrastive-text" class="text-sm md:text-base text-slate-600 leading-relaxed mt-3">
+                Contrastive explanation will appear here.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mt-5">
+            <div>
+                <p class="text-sm text-slate-500 mb-2">Grad-CAM</p>
+                <img id="explain-image-gradcam" alt="Grad-CAM explanation" class="w-full aspect-video object-contain rounded-lg border border-slate-200 bg-white p-1 hidden">
+            </div>
+            <div>
+                <p class="text-sm text-slate-500 mb-2">Attention Map</p>
+                <img id="explain-image-attnmap" alt="Attention map explanation" class="w-full aspect-video object-contain rounded-lg border border-slate-200 bg-white p-1 hidden">
+            </div>
+            <div>
+                <p class="text-sm text-slate-500 mb-2">Attention Rollout</p>
+                <img id="explain-image-rollout" alt="Attention rollout explanation" class="w-full aspect-video object-contain rounded-lg border border-slate-200 bg-white p-1 hidden">
+            </div>
+            <div>
+                <p class="text-sm text-slate-500 mb-2">Integrated Gradients</p>
+                <img id="explain-image-ig" alt="Integrated gradients explanation" class="w-full aspect-video object-contain rounded-lg border border-slate-200 bg-white p-1 hidden">
+            </div>
+        </div>
+        <p id="explain-placeholder" class="text-base text-slate-500 mt-4">No heatmap generated yet.</p>
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/webcam.js') }}"></script>
+{% endblock %}
