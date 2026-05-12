@@ -271,4 +271,7 @@ if __name__ == '__main__':
     # Ensure streamlit is killed when flask exits
     atexit.register(lambda p: p.terminate(), streamlit_process)
     
-    app.run(host="0.0.0.0", debug=True, port=5000, use_reloader=False)
+    # Use PORT environment variable (Railway default: 8080)
+    port = int(os.environ.get("PORT", 5000))
+    debug_mode = os.environ.get("FLASK_ENV", "development") == "development"
+    app.run(host="0.0.0.0", debug=debug_mode, port=port, use_reloader=False)
